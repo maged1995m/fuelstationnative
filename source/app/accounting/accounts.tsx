@@ -1,0 +1,14 @@
+import { router } from "expo-router";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+
+import { AppButton, AppScreen, EmptyState, PageHeader, formatMoney, palette } from "@/components/accounting-ui";
+import { useAccounting } from "@/lib/accounting/accounting-context";
+
+const typeLabel = { asset: "أصول", liability: "التزامات", equity: "حقوق ملكية", revenue: "إيرادات", expense: "مصروفات" };
+
+export default function AccountsScreen() {
+  const { state, accountBalances } = useAccounting(); const currency = state.profile?.currencySymbol || "ر.س";
+  return <AppScreen scroll={false}><View style={styles.page}><PageHeader title="دليل الحسابات" subtitle="أرصدة مستنتجة من القيود المرحّلة" back action={{ icon: "add", label: "إضافة حساب", onPress: () => router.push("/settings/masters" as never) }} /><FlatList data={state.accounts.filter((account) => account.isActive).sort((a, b) => a.code.localeCompare(b.code))} keyExtractor={(item) => item.id} contentContainerStyle={styles.list} renderItem={({ item }) => { const balance = accountBalances.find((record) => record.accountId === item.id)?.balance || 0; return <Pressable onPress={() => router.push(`/reports?account=${item.id}` as never)} style={({ pressed }) => [styles.row, pressed && styles.pressed]}><View style={styles.rowTop}><View><Text style={styles.code}>{item.code}</Text><Text style={styles.name}>{item.name}</Text></View><View style={styles.type}><Text style={styles.typeText}>{typeLabel[item.type]}</Text></View></View><Text style={styles.balance}>{formatMoney(balance, currency)}</Text></Pressable>; }} ListEmptyComponent={<EmptyState icon="account-tree" title="لا توجد حسابات" body="ينشئ التطبيق الحسابات النظامية تلقائياً عند أول تشغيل." />} ListFooterComponent={<View style={styles.footer}><AppButton title="إضافة حساب إضافي" icon="add" variant="outline" onPress={() => router.push("/settings/masters" as never)} /></View>} /></View></AppScreen>;
+}
+
+const styles = StyleSheet.create({ page: { flex: 1, paddingHorizontal: 18 }, list: { gap: 9, paddingBottom: 30 }, row: { backgroundColor: palette.card, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 14, gap: 9 }, rowTop: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }, code: { color: palette.petroleum, fontSize: 12, fontWeight: "800", textAlign: "right" }, name: { color: palette.ink, fontSize: 15, fontWeight: "800", textAlign: "right", marginTop: 2 }, type: { backgroundColor: palette.softPetrol, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 4 }, typeText: { color: palette.petroleum, fontSize: 11, fontWeight: "800" }, balance: { borderTopWidth: 1, borderTopColor: palette.border, paddingTop: 9, color: palette.ink, textAlign: "right", fontSize: 16, fontWeight: "800" }, pressed: { opacity: 0.7 }, footer: { paddingTop: 8 } });
